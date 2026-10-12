@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f5d50">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="น้ำมัน">
+<title>คำนวณน้ำมัน ยานพาหนะและเครื่องจักรกล</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f2f1ea;--card:#fff;--ink:#1d2822;--mute:#66706a;--line:#d9d8cc;--acc:#2f5d50;--accx:#fff;--dz:#a8661a;--bz:#2b5c8a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141815;--card:#1d241f;--ink:#e8ece6;--mute:#93a099;--line:#2f3832;--acc:#7fc4ae;--accx:#10201a;--dz:#e0a252;--bz:#7db0e0}}
+:root[data-theme="dark"]{--bg:#141815;--card:#1d241f;--ink:#e8ece6;--mute:#93a099;--line:#2f3832;--acc:#7fc4ae;--accx:#10201a;--dz:#e0a252;--bz:#7db0e0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Sarabun",system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px;font-weight:800;margin:4px 0 2px}
+.sub{color:var(--mute);margin:0 0 14px;font-size:14px}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--acc);color:var(--accx);border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input,select{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.res{margin-top:14px;padding:12px;border-left:4px solid var(--acc);background:var(--bg);border-radius:0 8px 8px 0}
+.big{font-size:34px;font-weight:800;line-height:1.1}
+.fuel{font-weight:600}.dz{color:var(--dz)}.bz{color:var(--bz)}
+button.go{width:100%;margin-top:12px;padding:12px;border:0;border-radius:8px;background:var(--acc);color:var(--accx);font:inherit;font-weight:800;cursor:pointer}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+tr.ty td{font-weight:800;background:var(--bg)}
+td.br{padding-left:18px;font-weight:400}
+.x{border:0;background:none;color:var(--mute);cursor:pointer;font-size:18px}
+.empty{color:var(--mute);text-align:center;padding:14px 0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>คำนวณน้ำมันเชื้อเพลิง</h1>
+<p class="sub">ยานพาหนะ (กม./ลิตร) และเครื่องจักรกล (ลิตร/ชม.) ตามเกณฑ์การใช้สิ้นเปลือง ปีงบประมาณ 2570</p>
+<div class="tabs" role="tablist">
+<button role="tab" id="t1" aria-selected="true">บันทึก/คำนวณ</button>
+<button role="tab" id="t2" aria-selected="false">รายงาน</button>
+</div>
+
+<section id="p1">
+<div class="card">
+<label for="d">วันที่</label><input type="date" id="d">
+<label for="ty">ชนิดรถ</label><select id="ty"></select>
+<div class="row">
+<div><label for="br">ยี่ห้อ</label><select id="br"></select></div>
+<div><label for="md">แบบ/รุ่น</label><select id="md"></select></div>
+</div>
+<div class="row">
+<div><label for="q" id="ql">ระยะทาง (กม.)</label><input type="number" id="q" min="0" step="any" inputmode="decimal"></div>
+<div><label for="n">จำนวนคัน/เครื่อง</label><input type="number" id="n" min="1" value="1" inputmode="numeric"></div>
+</div>
+<div id="mp"><label for="o">จุดเริ่มต้น</label><input id="o" placeholder="ชื่อสถานที่หรือที่อยู่"><label for="dt">จุดหมาย</label><input id="dt" placeholder="ชื่อสถานที่หรือที่อยู่"><p class="sub" style="margin:8px 0 0"><a id="gm" href="#" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600">เปิดเส้นทางใน Google Maps</a></p><div class="sub" id="gmst" style="margin:6px 0 0">ระบุจุดเริ่มต้นและจุดหมาย ระบบจะดึงระยะทางมาใส่ให้อัตโนมัติ</div><label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="rt2" style="width:auto"> ระยะที่กรอกเป็นเที่ยวเดียว คิดไป-กลับ (×2)</label></div>
+<label for="m">ค่าที่ใช้คำนวณ</label>
+<select id="m"><option value="a">ค่าเฉลี่ย</option><option value="s">เผื่อสูงสุด (ตามช่วงของคณะกรรมการ)</option></select>
+<label for="nt">หมายเหตุ (ถ้ามี)</label><input id="nt" placeholder="เช่น ภารกิจ / ทะเบียนรถ">
+<div class="res"><div class="big" id="r">0 ลิตร</div><div id="rf" class="fuel"></div><div id="rr" class="sub" style="margin:4px 0 0"></div></div>
+<button class="go" id="sv">บันทึกรายการ</button>
+</div>
+<div class="card"><b>รายการของวันที่เลือก</b><div class="tw" id="dl"></div></div>
+</section>
+
+<section id="p2" class="hide">
+<div class="card">
+<div class="row">
+<div><label for="pt">ช่วงเวลา</label><select id="pt"><option value="d">รายวัน</option><option value="m">รายเดือน</option><option value="y">รายปี</option></select></div>
+<div><label for="pv" id="pl">เลือกวัน</label><input id="pv"></div>
+</div>
+</div>
+<div class="card"><div class="sub" style="margin:0">น้ำมันที่ต้องเตรียม</div>
+<div class="big dz" id="td">0 ลิตร</div><div class="fuel dz">ดีเซล</div>
+<div class="big bz" id="tb" style="margin-top:8px">0 ลิตร</div><div class="fuel bz">เบนซิน</div></div>
+<div class="card"><b>แยกตามชนิดรถและยี่ห้อ</b><div class="tw" id="rt"></div></div>
+</section>
+</main>
+<script>
+// ===== ตั้งค่า: ใส่ Google Maps API key ของหน่วย (จำกัดให้ใช้ได้เฉพาะโดเมนที่โฮสต์) =====
+var GMAPS_KEY="ใส่_API_KEY_ที่นี่";
+(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({key:GMAPS_KEY,language:"th"});
+async function autoDist(){
+var a=document.getElementById("o").value.trim(),b=document.getElementById("dt").value.trim(),s=document.getElementById("gmst");
+if(!a||!b)return;
+if(GMAPS_KEY.indexOf("ใส่")===0){s.textContent="ยังไม่ได้ตั้งค่า API key กรอกระยะทางเองได้";return}
+if(!navigator.onLine){s.textContent="ไม่มีสัญญาณ กรอกระยะทางเองได้";return}
+s.textContent="กำลังคำนวณระยะทาง...";
+try{
+var R=(await google.maps.importLibrary("routes")).Route;
+var res=await R.computeRoutes({origin:a,destination:b,travelMode:"DRIVING",region:"th",fields:["distanceMeters"]});
+if(!res.routes||!res.routes.length){s.textContent="ไม่พบเส้นทาง ตรวจชื่อสถานที่อีกครั้ง";return}
+var km=Math.round(res.routes[0].distanceMeters/100)/10;
+document.getElementById("q").value=km;
+s.textContent="ระยะทางจาก Google Maps (เที่ยวเดียว): "+f(km)+" กม.";calc();
+}catch(e){console.error(e);s.textContent="ดึงระยะทางไม่สำเร็จ กรอกเองได้"}
+}
+// ชนิดรถ|ยี่ห้อ|แบบ/รุ่น|หน่วย(k=กม./ลิตร,h=ลิตร/ชม.)|เฉลี่ย|ต่ำสุด|สูงสุด
+var V=`รถจักรยานยนต์|Honda|Click 125i|k|25|23|25
+รถตู้|Nissan|Urvan NV350|k|7.5|5.5|7.5
+รถตู้|Toyota|Commuter|k|8|7|8
+รถตู้|Toyota|Commuter 2.8 MT (เช่า)|k|7.5|6|7.5
+รถโดยสารขนาดใหญ่|Mercedes-Benz|O500RS1836|k|2.7|2|2.7
+รถโดยสารขนาดใหญ่|Mercedes-Benz|OC500 RF IBC|k|3|2|3
+รถบรรทุกน้ำ|Nissan Diesel|GWA214MHRC|k|3|2|3
+รถบรรทุกน้ำ|Hino|XIR M8668|k|3|2|3
+รถบรรทุกน้ำมัน|Isuzu|FTR33H|k|3|2|3
+รถบรรทุกน้ำมัน|Isuzu|FVZ34 (20,000 ลิตร)|k|3.5|3|3.5
+รถนั่งตรวจการณ์|Chevrolet|Trailblazer 2.8|k|7|5|7
+รถนั่งตรวจการณ์|Toyota|Fortuner (เช่า)|k|7|6|7
+รถตรวจการณ์อเนกประสงค์|Transformer|GUN126R Max II|k|6.5|5|6.5
+รถปฏิบัติการสื่อสาร|Toyota|Hilux Revo 4x4|k|7|6|7
+รถบรรทุกขนาดเล็ก (ปิคอัพ)|Isuzu|D-MAX V-Cross (เช่า)|k|7|6|7
+รถบรรทุกขนาดเล็ก (ปิคอัพ)|Isuzu|TFS85 / V-Cross|k|6.5|5.5|6.5
+รถบรรทุกขนาดกลาง 6 ล้อ|Hino|FF1JPLA|k|5.5|4|5.5
+รถบรรทุกขนาดกลาง 6 ล้อ|Isuzu|NPR75 (เช่า)|k|5|4|5
+รถบรรทุกขนาดใหญ่|Nissan|CDA214|k|3|2|3`;
+var M=`รถเกลี่ย|Mitsubishi|MG331 / MG431|h|16|14|16
+รถเกลี่ย|Caterpillar|140GC|h|16|14|16
+รถขุดตัก|Komatsu|PC45|h|5|3|5
+รถขุดตัก|Komatsu|PC200-7|h|22|20|22
+รถขุดตัก|Hitachi|ZX200|h|22|20|22
+รถขุดตัก|Hitachi|ZX120|h|15|13|15
+รถขุดตัก|Kobelco|SK210LC-8|h|22|20|22
+รถขุดตัก|Liebherr|R912LC|h|23|21|23
+รถถากถาง|Komatsu|D85PX-15R|h|30|25|30
+รถถากถาง|Liebherr|PR741c|h|30|30|32
+รถถากถาง|Caterpillar|D5B|h|14|14|16
+รถตักบรรทุก|Kawasaki|60ZIV|h|14|12|14
+รถตักบรรทุก|JCB|416HT|h|20|18|20
+รถบด|Compactor|M612DT|h|23|20|23
+รถบด|Kawasaki|K20II|h|19|16|19
+รถบด|Bomag|BW27RH|h|38|36|38
+รถบดสั่นสะเทือน|Sakai|SV512|h|14|12|14
+รถบริการสนับสนุน|Isuzu|NKR55EX1|h|5.5|4.5|5.5
+เรือขุดลอกอเนกประสงค์|Berky|6780|h|40|35|40
+รถบรรทุกเทท้าย|Isuzu|FTR33H / FTR34|k|3|2|3
+รถบรรทุกเทท้าย|Isuzu|FXZ77 / FVM34 (ติดปั้นจั่น)|k|2|1|2
+รถบรรทุกเทท้าย|Isuzu|FZX23|k|2|1.5|2
+รถบรรทุกเทท้าย|Hino|FM1ANKD|k|2.5|1.5|2.5
+รถบรรทุกเทท้าย|Nissan|CWM454|k|2|1|2
+รถราดน้ำ|Nissan|PKB214|k|3|2|3
+รถกู้ภัยเคลื่อนที่เร็ว|Isuzu|FTR33P2E|k|3|2|3
+รถกู้ภัยพิเศษขนาดใหญ่|Isuzu|FXZ23NZH2E|k|2|1|2
+ชุดประปาสนามเคลื่อนที่|Isuzu|KZH2E|k|2|1|2
+รถเครื่องอัดอากาศ|Isuzu|FTR33P2E|k|3|2|3
+รถสุขาเคลื่อนที่|Isuzu|FTR34QZL|k|3|2|3
+รถสูบสิ่งปฏิกูล|Isuzu|FTR34 LXXXU|k|3|2|3
+รถต้มสีตีเส้นจราจร|Hino|XZU413R|k|3|2|3
+รถบรรทุกและวางสะพาน|Steyr|Modular Fast Bridge|k|2|1|2
+รถบรรทุกและวางสะพาน|Shacman|Modular Fast Bridge|k|2|1|2
+รถลากจูง|Steyr|32S28|k|3|2|3
+รถลากจูง|Hino|FM2PK18|k|2|1|2
+รถกู้ภัยอเนกประสงค์|Transformer|2F-E1El|k|7.5|6.5|7.5
+รถชุดครัวสนาม|Isuzu|FTR33P-2E|k|4|3|4.4
+รถเสบียงอาหาร|Isuzu|FTR33P-2E|k|4|3|4
+รถปฏิบัติการช่วยเหลือผู้ประสบภัย|Isuzu|V-Cross TFS85JEQH4|k|5|4|5`;
+var C=[];
+[[V,"ยานพาหนะ"],[M,"เครื่องจักรกล"]].forEach(function(p){p[0].split("\n").forEach(function(l){var a=l.split("|");C.push({t:a[0],b:a[1],m:a[2],u:a[3],a:+a[4],lo:+a[5],hi:+a[6],g:p[1],f:a[0]==="รถจักรยานยนต์"?"B":"D"})})});
+var K="fuelLog2",$=function(i){return document.getElementById(i)};
+var L=[];try{L=JSON.parse(localStorage.getItem(K)||"[]")}catch(e){}
+function save(){try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}}
+function opts(sel,items){sel.innerHTML="";items.forEach(function(x){var o=document.createElement("option");o.value=x[0];o.textContent=x[1];sel.appendChild(o)})}
+function uniq(a){return a.filter(function(x,i){return a.indexOf(x)===i})}
+function fillTy(){var ty=$("ty"),gs={};C.forEach(function(c){if(!gs[c.g]){gs[c.g]=document.createElement("optgroup");gs[c.g].label=c.g;ty.appendChild(gs[c.g])}});
+uniq(C.map(function(c){return c.t})).forEach(function(t){var g=C.filter(function(c){return c.t===t})[0].g,o=document.createElement("option");o.value=o.textContent=t;gs[g].appendChild(o)});fillBr()}
+function fillBr(){opts($("br"),uniq(C.filter(function(c){return c.t===$("ty").value}).map(function(c){return c.b})).map(function(b){return [b,b]}));fillMd()}
+function fillMd(){var r=[];C.forEach(function(c,i){if(c.t===$("ty").value&&c.b===$("br").value)r.push([i,c.m])});opts($("md"),r);calc()}
+function cur(){return C[+$("md").value]}
+function lit(c,q,n,m){var r=m==="s"?(c.u==="k"?c.lo:c.hi):c.a;return c.u==="k"?q*n/r:q*n*r}
+function f(x){return (Math.round(x*10)/10).toLocaleString("th-TH")}
+var today=new Date(),pad=function(x){return String(x).padStart(2,"0")};
+var iso=today.getFullYear()+"-"+pad(today.getMonth()+1)+"-"+pad(today.getDate());
+$("d").value=iso;
+function Q(){var v=+$("q").value||0;return $("rt2").checked&&cur().u==="k"?v*2:v}
+function gm(){$("gm").href="https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+encodeURIComponent($("o").value.trim())+"&destination="+encodeURIComponent($("dt").value.trim())}
+function calc(){var c=cur(),q=Q(),n=+$("n").value||1;
+$("ql").textContent=c.u==="k"?"ระยะทาง (กม.)":"ชั่วโมงทำงาน (ชม.)";$("mp").classList.toggle("hide",c.u!=="k");
+$("r").textContent=f(lit(c,q,n,$("m").value))+" ลิตร";
+$("rf").textContent="น้ำมัน"+(c.f==="B"?"เบนซิน":"ดีเซล");$("rf").className="fuel "+(c.f==="B"?"bz":"dz");
+$("rr").textContent="เกณฑ์ "+(c.lo===c.hi?c.a:c.lo+"-"+c.hi)+(c.u==="k"?" กม./ลิตร":" ลิตร/ชม.")+" (เฉลี่ย "+c.a+")"}
+$("ty").addEventListener("input",fillBr);["o","dt"].forEach(function(i){$(i).addEventListener("input",gm);$(i).addEventListener("change",autoDist)});$("br").addEventListener("input",fillMd);
+["md","q","n","m","rt2"].forEach(function(i){$(i).addEventListener("input",calc)});
+function tbl(rows,head){if(!rows.length)return '<div class="empty">ยังไม่มีรายการ</div>';
+return "<table><tr>"+head.map(function(h){return "<th>"+h+"</th>"}).join("")+"</tr>"+rows.join("")+"</table>"}
+function dayList(){var d=$("d").value,r=[];
+L.forEach(function(e,i){if(e.d===d)r.push("<tr><td>"+e.t+" "+e.b+" "+e.m+(e.nt?"<br><small>"+e.nt+"</small>":"")+"</td><td>"+f(e.q)+"×"+e.n+"</td><td>"+f(e.l)+'</td><td><button class="x" data-i="'+i+'" aria-label="ลบ">×</button></td></tr>')});
+$("dl").innerHTML=tbl(r,["รายการ","งาน×จำนวน","ลิตร",""])}
+$("d").addEventListener("input",dayList);
+$("dl").addEventListener("click",function(e){var i=e.target.getAttribute("data-i");if(i!==null){L.splice(+i,1);save();dayList()}});
+$("sv").addEventListener("click",function(){var c=cur(),q=Q(),n=+$("n").value||1;
+if(!(q>0)||!$("d").value){$("rr").textContent="กรอกวันที่และปริมาณงานก่อนบันทึก";return}
+L.push({d:$("d").value,t:c.t,b:c.b,m:c.m,q:q,n:n,l:lit(c,q,n,$("m").value),u:c.u,f:c.f,nt:$("nt").value.replace(/[<>&]/g,"")});
+save();$("q").value="";$("nt").value="";calc();dayList()});
+function tab(k){["1","2"].forEach(function(x){$("p"+x).classList.toggle("hide",x!==k);$("t"+x).setAttribute("aria-selected",x===k)});if(k==="2")rep()}
+$("t1").onclick=function(){tab("1")};$("t2").onclick=function(){tab("2")};
+function setP(){var t=$("pt").value,p=$("pv");
+if(t==="d"){p.type="date";p.value=iso;$("pl").textContent="เลือกวัน"}
+else if(t==="m"){p.type="month";p.value=iso.slice(0,7);$("pl").textContent="เลือกเดือน"}
+else{p.type="number";p.value=today.getFullYear();$("pl").textContent="ปี (ค.ศ.)"}rep()}
+function rep(){var v=$("pv").value,by={},T={D:0,B:0};
+L.forEach(function(e){if(v&&e.d.indexOf(v)===0){var o=by[e.t]||(by[e.t]={l:0,br:{}});o.l+=e.l;var b=o.br[e.b]||(o.br[e.b]={q:0,l:0});b.q+=e.q*e.n;b.l+=e.l;b.u=e.u;T[e.f]+=e.l}});
+$("td").textContent=f(Math.ceil(T.D))+" ลิตร";$("tb").textContent=f(Math.ceil(T.B))+" ลิตร";
+var r=[];Object.keys(by).forEach(function(t){r.push('<tr class="ty"><td>'+t+"</td><td></td><td>"+f(by[t].l)+"</td></tr>");
+Object.keys(by[t].br).forEach(function(b){var o=by[t].br[b];r.push('<tr><td class="br">'+b+"</td><td>"+f(o.q)+(o.u==="k"?" กม.":" ชม.")+"</td><td>"+f(o.l)+"</td></tr>")})});
+$("rt").innerHTML=tbl(r,["ชนิดรถ / ยี่ห้อ","ปริมาณงาน","ลิตร"])}
+$("pt").addEventListener("input",setP);$("pv").addEventListener("input",rep);
+fillTy();dayList();setP();gm();
+</script>
+<script>if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("sw.js")})</script>
+</body>
+</html>
